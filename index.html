@@ -66,6 +66,9 @@
     .social-btn { transition: all .3s ease; cursor: pointer; }
     .social-btn:hover { transform: translateY(-4px) scale(1.03); }
 
+    .project-card { transition: all .3s ease; background: rgba(255,255,255,.5); backdrop-filter: blur(12px); border: 1px solid rgba(251,207,232,.4); }
+    .project-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -10px rgba(236,72,153,.2); border-color: rgba(236,72,153,.4); }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #FDF2F8; }
@@ -96,6 +99,7 @@
       <span class="font-caveat text-2xl text-pinky-600 font-bold">✦ framekid</span>
       <div class="flex gap-2">
         <a href="#gallery" class="nav-link text-sm font-medium text-gray-600 hover:text-pinky-500 transition-colors duration-200 px-3 py-2">Галерея</a>
+        <a href="#projects" class="nav-link text-sm font-medium text-gray-600 hover:text-pinky-500 transition-colors duration-200 px-3 py-2">Проекты</a>
         <a href="#specs" class="nav-link text-sm font-medium text-gray-600 hover:text-pinky-500 transition-colors duration-200 px-3 py-2">ПК</a>
         <a href="#links" class="nav-link text-sm font-medium text-gray-600 hover:text-pinky-500 transition-colors duration-200 px-3 py-2">Связь</a>
       </div>
@@ -118,9 +122,9 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
             Связаться
           </a>
-          <a href="#gallery" class="inline-flex items-center gap-2 border-2 border-pinky-300 text-pinky-600 px-7 py-3.5 rounded-full font-semibold text-sm hover:bg-pinky-50 transition-all duration-200 cursor-pointer">
+          <a href="#projects" class="inline-flex items-center gap-2 border-2 border-pinky-300 text-pinky-600 px-7 py-3.5 rounded-full font-semibold text-sm hover:bg-pinky-50 transition-all duration-200 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Галерея
+            Проекты
           </a>
         </div>
       </div>
@@ -154,7 +158,53 @@
     </div>
   </section>
 
+  <!-- ═══ Projects ═══ -->
+  <section id="projects" class="py-28 px-6 relative bg-white/10">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="font-caveat text-5xl md:text-6xl text-pinky-600 text-center fade-in-up">Мои проекты</h2>
+      <p class="text-gray-400 text-center mt-2 mb-14 fade-in-up delay-1">То, над чем я работал и что создавал</p>
+      
+      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto fade-in-up delay-2">
+        <!-- Dove Post -->
+        <div class="project-card rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-2xl">🕊️</span>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-pinky-100 text-pinky-600 uppercase tracking-wider">Разработка</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Dove Post</h3>
+            <p class="text-gray-500 text-sm leading-relaxed mb-4">
+              Собственный мессенджер, разрабатываемый как полноценный независимый сервис. Изучаю построение стабильной сетевой инфраструктуры для работы приложения через интернет.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-500">
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Networking</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Infrastructure</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Messenger</span>
+          </div>
+        </div>
 
+        <!-- Другие проекты / Системное программирование -->
+        <div class="project-card rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-2xl">💻</span>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-pinky-100 text-pinky-600 uppercase tracking-wider">Изучение & Системы</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Systems Engineering & С</h3>
+            <p class="text-gray-500 text-sm leading-relaxed mb-4">
+              Разработка утилит и скриптов в процессе глубокого изучения языка C и низкоуровневой инженерии систем. Эксперименты с кастомизацией и конфигурацией Unix/Linux окружений.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-500">
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">C / Systems</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Linux Configs</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Scripts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ═══ PC Specs ═══ -->
   <section id="specs" class="py-28 px-6 relative bg-white/30">
