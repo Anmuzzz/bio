@@ -87,13 +87,10 @@
 </head>
 <body>
 
-  <!-- ═══ Particles ═══ -->
   <canvas id="particles-canvas"></canvas>
 
-  <!-- ═══ Lightbox ═══ -->
   <div id="lightbox"><img id="lightbox-img" src="" alt=""></div>
 
-  <!-- ═══ Nav ═══ -->
   <nav class="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-xl border-b border-pinky-200/50" id="navbar">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <span class="font-caveat text-2xl text-pinky-600 font-bold">✦ framekid</span>
@@ -106,7 +103,6 @@
     </div>
   </nav>
 
-  <!-- ═══ Hero ═══ -->
   <section class="min-h-screen flex items-center relative pt-16 px-6 overflow-hidden bg-mesh">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center w-full">
       <div class="space-y-6 z-10">
@@ -142,7 +138,6 @@
     </div>
   </section>
 
-  <!-- ═══ Gallery ═══ -->
   <section id="gallery" class="py-28 px-6 relative">
     <div class="max-w-6xl mx-auto">
       <h2 class="font-caveat text-5xl md:text-6xl text-pinky-600 text-center fade-in-up">Галерея</h2>
@@ -158,14 +153,12 @@
     </div>
   </section>
 
-  <!-- ═══ Projects ═══ -->
   <section id="projects" class="py-28 px-6 relative bg-white/10">
     <div class="max-w-6xl mx-auto">
       <h2 class="font-caveat text-5xl md:text-6xl text-pinky-600 text-center fade-in-up">Мои проекты</h2>
       <p class="text-gray-400 text-center mt-2 mb-14 fade-in-up delay-1">То, над чем я работал и что создавал</p>
       
       <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto fade-in-up delay-2">
-        <!-- Dove Post -->
         <div class="project-card rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-4">
@@ -184,26 +177,24 @@
           </div>
         </div>
 
-        <!-- Starlight -->
         <div class="project-card rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">⭐</span>
-              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-pinky-100 text-pinky-600 uppercase tracking-wider">Фронтенд</span>
+              <span class="text-2xl">⚔️</span>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-pinky-100 text-pinky-600 uppercase tracking-wider">Моддинг</span>
             </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Starlight</h3>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">StarLightDLC</h3>
             <p class="text-gray-500 text-sm leading-relaxed mb-4">
-              Красивый и удобный интерфейс (фронтенд-часть) для веб-сервисов с упором на современный дизайн, плавные анимации и максимальную кастомизацию пользовательского опыта.
+              Собственный внутриигровой софт (чит / мод-меню) для Minecraft 1.21. Разработка и оптимизация функционала специально под загрузчик модов Fabric.
             </p>
           </div>
           <div class="flex flex-wrap gap-2 text-xs font-medium text-gray-500">
-            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Frontend</span>
-            <span class="bg-gray-100 px-2.5 py-1 rounded-md">UI/UX</span>
-            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Web Design</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Minecraft 1.21</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Fabric API</span>
+            <span class="bg-gray-100 px-2.5 py-1 rounded-md">Cheat Utility</span>
           </div>
         </div>
 
-        <!-- Системное программирование -->
         <div class="project-card rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-4">
@@ -225,7 +216,6 @@
     </div>
   </section>
 
-  <!-- ═══ PC Specs ═══ -->
   <section id="specs" class="py-28 px-6 relative bg-white/30">
     <div class="max-w-6xl mx-auto">
       <h2 class="font-caveat text-5xl md:text-6xl text-pinky-600 text-center fade-in-up">Мой ПК</h2>
@@ -251,7 +241,6 @@
     </div>
   </section>
 
-  <!-- ═══ Links ═══ -->
   <section id="links" class="py-28 px-6 relative">
     <div class="max-w-6xl mx-auto text-center">
       <h2 class="font-caveat text-5xl md:text-6xl text-pinky-600 fade-in-up">Связь</h2>
@@ -273,13 +262,11 @@
     </div>
   </section>
 
-  <!-- ═══ Footer ═══ -->
   <footer class="py-10 text-center text-sm text-gray-400 border-t border-pinky-200/40 relative bg-white/30">
     <span class="font-caveat text-xl text-pinky-400">✦ framekid ✦</span>
     <p class="mt-1">Сделано с любовью</p>
   </footer>
 
-  <!-- ═══ JS ═══ -->
   <script>
     // ── Particles ──
     const canvas = document.getElementById('particles-canvas');
