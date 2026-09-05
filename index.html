@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>framekid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{neutral:{50:'#fafafa',100:'#f5f5f5',200:'#e5e5e5',300:'#d4d4d4',400:'#a3a3a3',500:'#737373',600:'#525252',700:'#404040',800:'#262626',900:'#171717',950:'#0a0a0a'}},fontFamily:{heading:['Caveat','cursive'],body:['Quicksand','sans-serif'],mono:['"JetBrains Mono"','monospace']}}}}</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Quicksand',sans-serif;background:#0a0a0a;color:#e5e5e5;overflow-x:hidden;cursor:none}
+    .font-caveat{font-family:'Caveat',cursive}
+    .font-mono{font-family:'JetBrains Mono',monospace}
+
+    #cursor{position:fixed;width:20px;height:20px;border:2px solid #d4d4d4;border-radius:50%;pointer-events:none;z-index:9999;transition:transform .15s ease,background .15s ease,mix-blend-mode .15s ease}
+    #cursor-dot{position:fixed;width:6px;height:6px;background:#d4d4d4;border-radius:50%;pointer-events:none;z-index:9999;transition:transform .08s ease}
+    #cursor.hover{transform:scale(2.5);background:rgba(212,212,212,.15);mix-blend-mode:screen}
+    #cursor-trail{position:fixed;width:40px;height:40px;border:1px solid rgba(212,212,212,.3);border-radius:50%;pointer-events:none;z-index:9998;transition:transform .3s ease-out}
+
+    #three-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+    .noise{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+    section{position:relative;z-index:2}
+
+    @keyframes float{0%,100%{transform:translateY(0) perspective(800px) rotateX(0deg)}50%{transform:translateY(-18px) perspective(800px) rotateX(2deg)}}
+    @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(163,163,163,.2),0 0 60px rgba(163,163,163,.05)}50%{box-shadow:0 0 40px rgba(163,163,163,.35),0 0 80px rgba(163,163,163,.1)}}
+    @keyframes fade-up{from{opacity:0;transform:translateY(50px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes fade-in{from{opacity:0}to{opacity:1}}
+    @keyframes glow-line{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @keyframes orbit{0%{transform:rotate(0deg) translateX(140px) rotate(0deg)}100%{transform:rotate(360deg) translateX(140px) rotate(-360deg)}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+    .float{animation:float 6s ease-in-out infinite}
+    .reveal{opacity:0;animation:fade-up .8s cubic-bezier(.22,1,.36,1) forwards}
+    .reveal-d1{animation-delay:.1s}.reveal-d2{animation-delay:.2s}.reveal-d3{animation-delay:.35s}.reveal-d4{animation-delay:.5s}.reveal-d5{animation-delay:.65s}
+    .hero-enter{animation:fade-in 1.2s cubic-bezier(.22,1,.36,1) forwards}
+
+    .glow-line{height:1px;background:linear-gradient(90deg,transparent,#a3a3a3,transparent);background-size:200% 100%;animation:glow-line 4s linear infinite}
+
+    .project-card{
+      transition:all .4s cubic-bezier(.22,1,.36,1);
+      background:rgba(20,20,20,.6);
+      backdrop-filter:blur(20px);
+      border:1px solid rgba(163,163,163,.1);
+      position:relative;overflow:hidden;
+      transform-style:preserve-3d;
+      perspective:800px;
+    }
+    .project-card::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(163,163,163,.06) 0%,transparent 50%,rgba(163,163,163,.03) 100%);
+      opacity:0;transition:opacity .4s ease;
+    }
+    .project-card:hover::before{opacity:1}
+    .project-card:hover{
+      transform:translateY(-8px) scale(1.02);
+      box-shadow:0 25px 60px -15px rgba(0,0,0,.5),0 0 30px rgba(163,163,163,.08);
+      border-color:rgba(163,163,163,.3);
+    }
+    .project-card .icon-wrap{transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+    .project-card:hover .icon-wrap{transform:scale(1.2) rotate(-8deg) translateZ(20px)}
+
+    .stats-card{
+      background:rgba(20,20,20,.5);
+      backdrop-filter:blur(16px);
+      border:1px solid rgba(163,163,163,.08);
+      transition:all .35s cubic-bezier(.22,1,.36,1);
+      position:relative;overflow:hidden;
+    }
+    .stats-card::after{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(163,163,163,.04),transparent);
+      transition:left .6s ease;
+    }
+    .stats-card:hover::after{left:100%}
+    .stats-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 15px 35px -8px rgba(0,0,0,.4);border-color:rgba(163,163,163,.2)}
+
+    .social-btn{
+      transition:all .35s cubic-bezier(.34,1.56,.64,1);
+      cursor:none;position:relative;overflow:hidden;
+    }
+    .social-btn::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.05),transparent);
+      opacity:0;transition:opacity .3s ease;
+    }
+    .social-btn:hover::before{opacity:1}
+    .social-btn:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 20px 40px -10px rgba(0,0,0,.4)}
+
+    .ripple{position:fixed;border-radius:50%;background:rgba(163,163,163,.15);border:1px solid rgba(163,163,163,.1);pointer-events:none;animation:ripple-out .8s ease-out forwards;z-index:9999}
+    @keyframes ripple-out{0%{width:0;height:0;opacity:.9}100%{width:350px;height:350px;opacity:0;transform:translate(-50%,-50%)}}
+
+    .magnetic{transition:transform .2s ease-out}
+
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:#0a0a0a}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#a3a3a3,#525252);border-radius:3px}
+
+    .bg-mesh{
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 15%,rgba(163,163,163,.06) 0%,transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 85%,rgba(115,115,115,.04) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 50%,rgba(163,163,163,.03) 0%,transparent 60%),
+        #0a0a0a;
+    }
+
+    .morph-border{
+      animation:morph 8s ease-in-out infinite;
+      background:linear-gradient(135deg,#a3a3a3,#525252,#a3a3a3);
+      background-size:200% 200%;
+      animation:morph 8s ease-in-out infinite,shimmer 3s linear infinite;
+      padding:3px;
+    }
+    @keyframes morph{0%,100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}}
+
+    .text-gradient{
+      background:linear-gradient(135deg,#e5e5e5,#a3a3a3,#737373);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+
+    .parallax-layer{will-change:transform;transition:transform .1s ease-out}
+
+    .section-divider{
+      height:1px;
+      background:linear-gradient(90deg,transparent,rgba(163,163,163,.3),transparent);
+    }
+
+    .skill-badge{
+      transition:all .3s cubic-bezier(.34,1.56,.64,1);
+      position:relative;overflow:hidden;
+    }
+    .skill-badge::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(163,163,163,.15),transparent);
+      opacity:0;transition:opacity .3s ease;
+    }
+    .skill-badge:hover::before{opacity:1}
+    .skill-badge:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 8px 20px -5px rgba(0,0,0,.3)}
+
+    .code-block{
+      background:rgba(20,20,20,.8);
+      border:1px solid rgba(163,163,163,.1);
+      font-family:'JetBrains Mono',monospace;
+    }
+
+    .orbit-particle{
+      position:absolute;
+      width:6px;height:6px;
+      background:#a3a3a3;
+      border-radius:50%;
+      box-shadow:0 0 10px #a3a3a3,0 0 20px rgba(163,163,163,.3);
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+<div id="cursor-trail"></div>
+
+<canvas id="three-canvas"></canvas>
+
+<div class="noise"></div>
+
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl border-b border-neutral-700/20 hero-enter" id="navbar">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <span class="font-caveat text-3xl text-gradient font-bold tracking-wide magnetic">framekid</span>
+    <div class="flex gap-1 sm:gap-2">
+      <a href="#projects" class="text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors px-3 py-2 magnetic">Проекты</a>
+      <a href="#specs" class="text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors px-3 py-2 magnetic">Сетап</a>
+      <a href="#links" class="text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors px-3 py-2 magnetic">Контакты</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="min-h-screen flex items-center relative pt-20 px-6 bg-mesh">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center w-full">
+    <div class="space-y-6 parallax-layer" data-speed="0.02">
+      <span class="inline-block px-4 py-1.5 bg-neutral-800/50 border border-neutral-700/30 rounded-full text-neutral-400 font-mono text-xs font-semibold hero-enter tracking-wider">dev // systems // modding</span>
+      <h1 class="font-caveat text-6xl sm:text-7xl lg:text-8xl leading-none hero-enter text-gradient" style="animation-delay:.1s">framekid</h1>
+      <p class="text-neutral-500 text-base sm:text-lg max-w-md font-medium leading-relaxed hero-enter" style="animation-delay:.25s">Разработка софта, сетевых сервисов, модов и системных утилит.</p>
+
+      <div class="hero-enter font-mono text-sm text-neutral-600" style="animation-delay:.4s">
+        <span class="text-neutral-400">$</span> <span id="typewriter"></span><span class="animate-pulse">_</span>
+      </div>
+
+      <div class="flex flex-wrap gap-4 pt-2 hero-enter" style="animation-delay:.5s">
+        <a href="#projects" class="magnetic inline-flex items-center gap-2 bg-neutral-800 text-neutral-100 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-lg shadow-black/30" style="animation:pulse-glow 3s ease-in-out infinite">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Проекты
+        </a>
+        <a href="#links" class="magnetic inline-flex items-center gap-2 border border-neutral-700/40 bg-neutral-900/50 text-neutral-400 px-8 py-3.5 rounded-full font-bold text-sm hover:bg-neutral-800/50 transition-all backdrop-blur-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>Контакты
+        </a>
+      </div>
+    </div>
+
+    <div class="flex justify-center hero-enter relative" style="animation-delay:.3s">
+      <div class="absolute inset-0 flex items-center justify-center" style="animation:orbit 12s linear infinite"><div class="orbit-particle"></div></div>
+      <div class="absolute inset-0 flex items-center justify-center" style="animation:orbit 16s linear infinite reverse"><div class="orbit-particle" style="width:4px;height:4px;background:#737373;box-shadow:0 0 10px #737373"></div></div>
+      <div class="absolute inset-0 flex items-center justify-center" style="animation:orbit 20s linear infinite"><div class="orbit-particle" style="width:3px;height:3px;background:#525252;box-shadow:0 0 8px #525252"></div></div>
+
+      <div class="float">
+        <div class="morph-border rounded-3xl cursor-none group" style="transform-style:preserve-3d">
+          <div class="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden bg-neutral-900 flex items-center justify-center">
+            <svg class="w-24 h-24 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-line"></div>
+
+<!-- Projects Section -->
+<section id="projects" class="py-28 px-6 relative">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-caveat text-5xl sm:text-6xl text-center font-bold reveal text-gradient" data-text="Проекты">Проекты</h2>
+    <p class="text-neutral-600 text-center font-medium mt-1 mb-16 reveal reveal-d1 font-mono text-sm">// актуальная разработка</p>
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <!-- Dove Post -->
+      <div class="project-card rounded-2xl p-6 flex flex-col justify-between reveal reveal-d2 cursor-none" data-tilt>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl icon-wrap"><svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
+            <span class="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-neutral-800/60 text-neutral-400 uppercase tracking-wider border border-neutral-700/30">Networking</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Dove Post</h3>
+          <p class="text-neutral-500 text-sm leading-relaxed mb-6 font-medium">Клиент-серверный мессенджер. Независимый бэкенд, прямое сокет-соединение и передача данных по защищённому протоколу.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-[10px] font-mono font-semibold text-neutral-400">
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Sockets</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Backend</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Protocol</span>
+        </div>
+      </div>
+
+      <!-- StarLightDLC -->
+      <div class="project-card rounded-2xl p-6 flex flex-col justify-between reveal reveal-d3 cursor-none" data-tilt>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl icon-wrap"><svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+            <span class="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-neutral-800/60 text-neutral-400 uppercase tracking-wider border border-neutral-700/30">Modding</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">StarLightDLC</h3>
+          <p class="text-neutral-500 text-sm leading-relaxed mb-6 font-medium">Мод-клиент для Minecraft 1.21 под загрузчик Fabric. Кастомные хуки, утилиты и оптимизация под высокую частоту кадров.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-[10px] font-mono font-semibold text-neutral-400">
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Minecraft 1.21</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Fabric API</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Java</span>
+        </div>
+      </div>
+
+      <!-- Systems -->
+      <div class="project-card rounded-2xl p-6 flex flex-col justify-between reveal reveal-d4 cursor-none" data-tilt>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl icon-wrap"><svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+            <span class="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-neutral-800/60 text-neutral-400 uppercase tracking-wider border border-neutral-700/30">Systems</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Systems & CLI Tools</h3>
+          <p class="text-neutral-500 text-sm leading-relaxed mb-6 font-medium">Низкоуровневые утилиты на C, прямое управление памятью и системные скрипты для автоматизации конфигураций Linux.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-[10px] font-mono font-semibold text-neutral-400">
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">C</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Linux</span>
+          <span class="skill-badge bg-neutral-800/60 px-2.5 py-1 rounded-md border border-neutral-700/20">Memory</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Specs Section -->
+<section id="specs" class="py-28 px-6 relative">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-caveat text-5xl sm:text-6xl text-center font-bold reveal text-gradient" data-text="Сетап">Сетап</h2>
+    <p class="text-neutral-600 text-center font-medium mt-1 mb-14 reveal reveal-d1 font-mono text-sm">// рабочая станция</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="stats-card rounded-2xl p-5 flex items-center gap-4 reveal reveal-d2 cursor-none">
+        <div class="w-10 h-10 rounded-xl bg-neutral-800/60 flex items-center justify-center shrink-0 border border-neutral-700/30">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <div><div class="text-[10px] font-mono font-bold text-neutral-600 uppercase tracking-wider">CPU</div><div class="font-bold text-white text-sm mt-0.5">Ryzen 5 5600</div></div>
+      </div>
+      <div class="stats-card rounded-2xl p-5 flex items-center gap-4 reveal reveal-d3 cursor-none">
+        <div class="w-10 h-10 rounded-xl bg-neutral-800/60 flex items-center justify-center shrink-0 border border-neutral-700/30">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+        </div>
+        <div><div class="text-[10px] font-mono font-bold text-neutral-600 uppercase tracking-wider">GPU</div><div class="font-bold text-white text-sm mt-0.5">RTX 4060 Ti</div></div>
+      </div>
+      <div class="stats-card rounded-2xl p-5 flex items-center gap-4 reveal reveal-d4 cursor-none">
+        <div class="w-10 h-10 rounded-xl bg-neutral-800/60 flex items-center justify-center shrink-0 border border-neutral-700/30">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div><div class="text-[10px] font-mono font-bold text-neutral-600 uppercase tracking-wider">RAM</div><div class="font-bold text-white text-sm mt-0.5">32GB DDR4</div></div>
+      </div>
+      <div class="stats-card rounded-2xl p-5 flex items-center gap-4 reveal reveal-d5 cursor-none">
+        <div class="w-10 h-10 rounded-xl bg-neutral-800/60 flex items-center justify-center shrink-0 border border-neutral-700/30">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
+        </div>
+        <div><div class="text-[10px] font-mono font-bold text-neutral-600 uppercase tracking-wider">OS</div><div class="font-bold text-white text-sm mt-0.5">CachyOS</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Contacts Section -->
+<section id="links" class="py-28 px-6 relative">
+  <div class="max-w-6xl mx-auto text-center">
+    <h2 class="font-caveat text-5xl sm:text-6xl font-bold reveal text-gradient" data-text="Контакты">Контакты</h2>
+    <p class="text-neutral-600 font-medium mt-1 mb-14 reveal reveal-d1 font-mono text-sm">// связи и профили</p>
+    <div class="flex flex-col sm:flex-row justify-center gap-4 max-w-xl mx-auto">
+      <a href="https://t.me/framekidi" target="_blank" class="social-btn magnetic flex items-center justify-center gap-3 bg-neutral-900 text-white px-8 py-4 rounded-2xl font-bold text-sm border border-neutral-700/30 reveal reveal-d2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>Telegram
+      </a>
+      <a href="https://github.com/Anmuzzz" target="_blank" class="social-btn magnetic flex items-center justify-center gap-3 bg-neutral-900 text-white px-8 py-4 rounded-2xl font-bold text-sm border border-neutral-700/30 reveal reveal-d3">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-8 text-center text-xs font-mono font-medium text-neutral-600 border-t border-neutral-800/50 reveal">
+  framekid &copy; 2026 // all rights reserved // built with caffeine
+</footer>
+
+<script>
+const canvas = document.getElementById('three-canvas');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+camera.position.z = 30;
+
+const geometries = [];
+const materials = [
+  new THREE.MeshBasicMaterial({ color: 0xa3a3a3, wireframe: true, transparent: true, opacity: 0.12 }),
+  new THREE.MeshBasicMaterial({ color: 0x737373, wireframe: true, transparent: true, opacity: 0.1 }),
+  new THREE.MeshBasicMaterial({ color: 0x525252, wireframe: true, transparent: true, opacity: 0.08 }),
+];
+
+const shapes = [
+  new THREE.IcosahedronGeometry(1.5, 0),
+  new THREE.OctahedronGeometry(1.2, 0),
+  new THREE.TorusGeometry(1, 0.3, 8, 16),
+  new THREE.TetrahedronGeometry(1, 0),
+  new THREE.DodecahedronGeometry(1, 0),
+];
+
+for (let i = 0; i < 18; i++) {
+  const geo = shapes[Math.floor(Math.random() * shapes.length)];
+  const mat = materials[Math.floor(Math.random() * materials.length)];
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(
+    (Math.random() - 0.5) * 60,
+    (Math.random() - 0.5) * 60,
+    (Math.random() - 0.5) * 30
+  );
+  mesh.userData = {
+    rotSpeed: { x: (Math.random() - 0.5) * 0.01, y: (Math.random() - 0.5) * 0.01 },
+    floatSpeed: Math.random() * 0.005 + 0.002,
+    floatOffset: Math.random() * Math.PI * 2,
+    baseY: mesh.position.y
+  };
+  scene.add(mesh);
+  geometries.push(mesh);
+}
+
+const particleCount = 200;
+const particleGeo = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3] = (Math.random() - 0.5) * 80;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particleMat = new THREE.PointsMaterial({ size: 0.08, color: 0xa3a3a3, transparent: true, opacity: 0.5 });
+scene.add(new THREE.Points(particleGeo, particleMat));
+
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', e => { mouseX = (e.clientX / innerWidth - 0.5) * 2; mouseY = (e.clientY / innerHeight - 0.5) * 2; });
+
+function animate3D() {
+  requestAnimationFrame(animate3D);
+  const t = Date.now() * 0.001;
+  geometries.forEach(m => {
+    m.rotation.x += m.userData.rotSpeed.x;
+    m.rotation.y += m.userData.rotSpeed.y;
+    m.position.y = m.userData.baseY + Math.sin(t * m.userData.floatSpeed * 100 + m.userData.floatOffset) * 2;
+  });
+  camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
+  camera.position.y += (-mouseY * 3 - camera.position.y) * 0.02;
+  camera.lookAt(scene.position);
+  renderer.render(scene, camera);
+}
+animate3D();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+const cursorTrail = document.getElementById('cursor-trail');
+let cx = 0, cy = 0, tx = 0, ty = 0;
+
+document.addEventListener('mousemove', e => {
+  tx = e.clientX; ty = e.clientY;
+  cursorDot.style.left = e.clientX - 3 + 'px';
+  cursorDot.style.top = e.clientY - 3 + 'px';
+});
+
+function updateCursor() {
+  cx += (tx - cx) * 0.15;
+  cy += (ty - cy) * 0.15;
+  cursor.style.left = cx - 10 + 'px';
+  cursor.style.top = cy - 10 + 'px';
+  cursorTrail.style.left = cx - 20 + 'px';
+  cursorTrail.style.top = cy - 20 + 'px';
+  requestAnimationFrame(updateCursor);
+}
+updateCursor();
+
+document.querySelectorAll('a, button, .project-card, .stats-card, .social-btn, .magnetic, .skill-badge').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+document.addEventListener('click', e => {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = e.clientX + 'px';
+  r.style.top = e.clientY + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 800);
+});
+
+document.querySelectorAll('[data-tilt]').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    card.style.transform = `perspective(800px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateY(-8px) scale(1.02)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateY(0deg) rotateX(0deg) translateY(0) scale(1)';
+  });
+});
+
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2;
+    const y = e.clientY - r.top - r.height / 2;
+    btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+  });
+  btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0, 0)'; });
+});
+
+const typewriterEl = document.getElementById('typewriter');
+const phrases = [
+  'neofetch && sudo make me a sandwich',
+  'cat /dev/brain | grep --color=always "idea"',
+  'ssh into the matrix',
+  'git commit -m "yet another cool project"',
+  'void pointer to infinity',
+];
+let phraseIdx = 0, charIdx = 0, deleting = false;
+
+function typewrite() {
+  const current = phrases[phraseIdx];
+  if (!deleting) {
+    typewriterEl.textContent = current.substring(0, charIdx + 1);
+    charIdx++;
+    if (charIdx === current.length) { deleting = true; setTimeout(typewrite, 2000); return; }
+    setTimeout(typewrite, 50 + Math.random() * 40);
+  } else {
+    typewriterEl.textContent = current.substring(0, charIdx - 1);
+    charIdx--;
+    if (charIdx === 0) { deleting = false; phraseIdx = (phraseIdx + 1) % phrases.length; setTimeout(typewrite, 400); return; }
+    setTimeout(typewrite, 25);
+  }
+}
+typewrite();
+
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(n => {
+    if (n.isIntersecting) {
+      n.style.opacity = '1';
+      n.style.animation = 'fade-up .8s cubic-bezier(.22,1,.36,1) forwards';
+      n.style.animationDelay = n.style.animationDelay || '0s';
+      observer.unobserve(n);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+revealEls.forEach(el => observer.observe(el));
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    const t = document.querySelector(this.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+document.querySelectorAll('.parallax-layer').forEach(layer => {
+  const speed = parseFloat(layer.dataset.speed) || 0.02;
+  document.querySelector('.min-h-screen').addEventListener('mousemove', e => {
+    const x = (e.clientX / innerWidth - 0.5) * 2;
+    const y = (e.clientY / innerHeight - 0.5) * 2;
+    layer.style.transform = `translate(${x * speed * 100}px, ${y * speed * 100}px)`;
+  });
+});
+
+const heroImg = document.querySelector('.morph-border');
+if (heroImg) {
+  document.querySelector('.min-h-screen').addEventListener('mousemove', e => {
+    const r = heroImg.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) / 25;
+    const dy = (e.clientY - (r.top + r.height / 2)) / 25;
+    heroImg.style.transform = `rotateX(${-dy}deg) rotateY(${dx}deg) scale(1.02)`;
+  });
+  document.querySelector('.min-h-screen').addEventListener('mouseleave', () => {
+    heroImg.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+  });
+}
+
+let lastScroll = 0;
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  const curr = window.pageYOffset;
+  navbar.style.transform = curr > lastScroll && curr > 80 ? 'translateY(-100%)' : 'translateY(0)';
+  lastScroll = curr;
+});
+
+document.querySelectorAll('[data-text]').forEach(el => {
+  const original = el.textContent;
+  const chars = '!@#$%^&*()_+-=[]{}|;:,.<>?~`';
+  el.addEventListener('mouseenter', () => {
+    let iterations = 0;
+    const interval = setInterval(() => {
+      el.textContent = original.split('').map((c, i) => {
+        if (i < iterations) return original[i];
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join('');
+      iterations += 1 / 2;
+      if (iterations >= original.length) { clearInterval(interval); el.textContent = original; }
+    }, 30);
+  });
+});
+
+let konamiBuffer = [];
+const konamiCode = [38,38,40,40,37,39,37,39,66,65];
+document.addEventListener('keydown', e => {
+  konamiBuffer.push(e.keyCode);
+  if (konamiBuffer.length > 10) konamiBuffer.shift();
+  if (JSON.stringify(konamiBuffer) === JSON.stringify(konamiCode)) {
+    document.body.style.transition = 'transform 1s ease';
+    document.body.style.transform = 'rotate(360deg)';
+    setTimeout(() => { document.body.style.transform = ''; }, 1200);
+    konamiBuffer = [];
+  }
+});
+</script>
+</body>
+</html>
